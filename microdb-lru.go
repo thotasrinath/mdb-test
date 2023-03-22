@@ -15,9 +15,9 @@ type MDBCache struct {
 	CqlSession *gocql.Session
 }
 
-func LruInstantiate() MDBCache {
+func LruInstantiate(cassUrl string, cacheSize int) MDBCache {
 
-	cluster := gocql.NewCluster("localhost:9042")
+	cluster := gocql.NewCluster(cassUrl)
 	cluster.Keyspace = "test_db"
 	cluster.Consistency = gocql.Quorum
 
@@ -28,7 +28,7 @@ func LruInstantiate() MDBCache {
 	}
 	//defer session.Close()
 
-	cache, _ := lru.NewWithEvict(3, func(key string, value *sql.DB) {
+	cache, _ := lru.NewWithEvict(cacheSize, func(key string, value *sql.DB) {
 		SerializeToCassandra(key, value, session)
 	})
 
@@ -59,6 +59,8 @@ func SerializeToCassandra(key string, value *sql.DB, session *gocql.Session) {
 		key, serialized).WithContext(ctx).Exec(); err != nil {
 		log.Fatal(err)
 	}
+
+	log.Println("Stored MDB to cassandra for key : ", key)
 
 	value.Close()
 }

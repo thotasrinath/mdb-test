@@ -1,0 +1,2 @@
+cassandra-url: localhost:9042
+cache-size: 3

@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
+
+	"gopkg.in/yaml.v2"
 )
 
 type TeacherManager struct {
@@ -14,6 +17,25 @@ type Student struct {
 	Code    string `json:"Code"`
 	Name    string `json:"Name"`
 	Program string `json:"Program"`
+}
+
+type conf struct {
+	CassadraURI string `yaml:"cassandra-url"`
+	CacheSize   int    `yaml:"cache-size"`
+}
+
+func (c *conf) getConf() *conf {
+
+	yamlFile, err := ioutil.ReadFile("conf.yaml")
+	if err != nil {
+		log.Printf("yamlFile.Get err   #%v ", err)
+	}
+	err = yaml.Unmarshal(yamlFile, c)
+	if err != nil {
+		log.Fatalf("Unmarshal: %v", err)
+	}
+
+	return c
 }
 
 func (t *TeacherManager) GetAllStudents(w http.ResponseWriter, r *http.Request) {
@@ -56,12 +78,15 @@ func (t *TeacherManager) AddStudent(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	mDBCache := LruInstantiate()
+	var c conf
+	c.getConf()
 
-	c := TeacherManager{mDBCache: mDBCache}
+	mDBCache := LruInstantiate(c.CassadraURI, c.CacheSize)
 
-	http.HandleFunc("/getstudents", c.GetAllStudents)
-	http.HandleFunc("/addstudent", c.AddStudent)
+	tMgr := TeacherManager{mDBCache: mDBCache}
+
+	http.HandleFunc("/getstudents", tMgr.GetAllStudents)
+	http.HandleFunc("/addstudent", tMgr.AddStudent)
 
 	log.Println("Starting HTTP server...")
 

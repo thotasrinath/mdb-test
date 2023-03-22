@@ -63,5 +63,8 @@ func main() {
 	http.HandleFunc("/getstudents", c.GetAllStudents)
 	http.HandleFunc("/addstudent", c.AddStudent)
 
+	log.Println("Starting HTTP server...")
+
 	http.ListenAndServe(":8080", nil)
+
 }

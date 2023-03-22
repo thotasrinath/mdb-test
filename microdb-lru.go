@@ -59,6 +59,8 @@ func SerializeToCassandra(key string, value *sql.DB, session *gocql.Session) {
 		key, serialized).WithContext(ctx).Exec(); err != nil {
 		log.Fatal(err)
 	}
+
+	value.Close()
 }
 
 func (c *MDBCache) GetMDB(key string) *sql.DB {
